@@ -1,9 +1,9 @@
 name: OCI Instance Sniper
 
 on:
-  workflow_dispatch: # Allows you to start it manually
+  workflow_dispatch:
   schedule:
-    - cron: '*/6 * * * *' # Runs every 6 minutes
+    - cron: '*/6 * * * *'
 
 jobs:
   build:
@@ -20,16 +20,23 @@ jobs:
       - name: Install Dependencies
         run: composer install
 
+      # This new step creates the actual file the script is looking for
+      - name: Create Private Key File
+        run: |
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ./oracle_key.pem
+          chmod 600 ./oracle_key.pem
+
       - name: Run Sniper Script
         env:
           OCI_REGION: ${{ secrets.OCI_REGION }}
           OCI_USER_ID: ${{ secrets.OCI_USER_OCID }}
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_KEY_FINGERPRINT }}
-          OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+          # Notice we changed the name here to match what the script wants:
+          OCI_PRIVATE_KEY_FILENAME: ./oracle_key.pem
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_ID }}
           OCI_IMAGE_ID: ${{ secrets.OCI_IMAGE_ID }}
-          OCI_AVAILABILITY_DOMAIN: "dngw:UK-LONDON-1-AD-2" # Read note below!
+          OCI_AVAILABILITY_DOMAIN: "dngw:UK-LONDON-1-AD-2"
           OCI_OCPUS: 4
           OCI_MEMORY_IN_GBS: 24
         run: php index.php
